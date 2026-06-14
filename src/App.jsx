@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { CalendarDays } from 'lucide-react';
 import Header from './components/Header';
-import DayCard from './components/DayCard';
 import ActivityModal from './components/ActivityModal';
 import CalendarDrawer from './components/CalendarDrawer';
 import Summary from './components/Summary';
@@ -11,7 +10,6 @@ import './index.css';
 
 export default function App() {
   const [itinerary, setItinerary] = useState(getDefaultItinerary);
-  const [activeDay, setActiveDay] = useState(null);
   const [modal, setModal] = useState(null); // { dayIndex, activity }
   const [calendarOpen, setCalendarOpen] = useState(false);
 
@@ -80,49 +78,37 @@ export default function App() {
   const modalDay = modal ? itinerary.days[modal.dayIndex] : null;
 
   return (
-    <div style={styles.app}>
+    <div>
       <Header
         tripName={itinerary.tripName}
         startDate={itinerary.startDate}
         onUpdate={handleHeaderUpdate}
       />
 
-      <div className="app-layout">
-        {/* Sidebar */}
-        <aside className="app-sidebar">
+      <div className="home-layout">
+        <div className="home-grid">
           <Summary days={itinerary.days} />
           <Checklist />
-          <QuickNav days={itinerary.days} activeDay={activeDay} onJump={setActiveDay} />
-          <button style={styles.calendarBtn} onClick={() => setCalendarOpen(true)}>
-            <CalendarDays size={18} />
-            View Calendar
-          </button>
-        </aside>
+        </div>
 
-        {/* Days */}
-        <main className="app-main">
-          <div style={styles.daysGrid}>
-            {itinerary.days.map((day, idx) => (
-              <DayCard
-                key={day.id}
-                day={day}
-                dayIndex={idx}
-                isActive={activeDay === idx}
-                onToggle={() => setActiveDay(prev => prev === idx ? null : idx)}
-                onAddActivity={openAddActivity}
-                onEditActivity={act => openEditActivity(idx, act)}
-                onUpdateDay={changes => handleUpdateDay(idx, changes)}
-              />
-            ))}
-          </div>
-        </main>
+        <QuickNav
+          days={itinerary.days}
+          onJump={() => setCalendarOpen(true)}
+        />
+
+        <button style={styles.calendarBtn} onClick={() => setCalendarOpen(true)}>
+          <CalendarDays size={20} />
+          Open Itinerary &amp; Calendar
+        </button>
       </div>
 
       {calendarOpen && (
         <CalendarDrawer
           days={itinerary.days}
           startDate={itinerary.startDate}
-          onJump={idx => setActiveDay(idx)}
+          onAddActivity={openAddActivity}
+          onEditActivity={openEditActivity}
+          onUpdateDay={handleUpdateDay}
           onClose={() => setCalendarOpen(false)}
         />
       )}
@@ -140,25 +126,19 @@ export default function App() {
   );
 }
 
-function QuickNav({ days, activeDay, onJump }) {
+function QuickNav({ days, onJump }) {
   return (
     <div style={navStyles.wrap}>
-      <p style={navStyles.label}>Quick Jump</p>
+      <p style={navStyles.label}>Quick Jump — tap a day to open the itinerary</p>
       <div className="quicknav-grid">
         {days.map((day, idx) => (
           <button
             key={day.id}
             style={{
               ...navStyles.btn,
-              ...(activeDay === idx ? navStyles.btnActive : {}),
               ...(day.activities.length > 0 ? navStyles.btnFilled : {}),
             }}
-            onClick={() => {
-              onJump(prev => prev === idx ? null : idx);
-              setTimeout(() => {
-                document.getElementById(`day-card-${idx}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }, 50);
-            }}
+            onClick={onJump}
             title={`Day ${day.dayNumber}${day.location ? ' — ' + day.location : ''}`}
           >
             {day.dayNumber}
@@ -196,43 +176,31 @@ const navStyles = {
     cursor: 'pointer',
     transition: 'all 0.15s',
   },
-  btnActive: {
-    background: '#c1704a',
-    borderColor: '#c1704a',
-    color: '#fff',
-    fontWeight: 700,
-  },
   btnFilled: {
     background: '#f5ede6',
     borderColor: '#d4a893',
     color: '#c1704a',
+    fontWeight: 700,
   },
 };
 
 const styles = {
-  app: {
-    minHeight: '100vh',
-  },
-  daysGrid: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 12,
-  },
   calendarBtn: {
     width: '100%',
-    minHeight: 48,
+    minHeight: 52,
     background: 'linear-gradient(135deg, #c1704a, #a05a38)',
     color: '#fff',
     border: 'none',
-    borderRadius: 14,
-    fontSize: 14,
-    fontWeight: 600,
+    borderRadius: 16,
+    fontSize: 16,
+    fontWeight: 700,
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    boxShadow: '0 2px 12px rgba(193,112,74,0.3)',
+    gap: 10,
+    boxShadow: '0 4px 20px rgba(193,112,74,0.35)',
     fontFamily: 'inherit',
+    letterSpacing: '0.2px',
   },
 };

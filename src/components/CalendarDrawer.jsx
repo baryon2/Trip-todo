@@ -1,5 +1,6 @@
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { X, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { useState, useRef } from 'react';
+import DayCard from './DayCard';
 
 const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
@@ -14,28 +15,24 @@ function buildMonth(year, month) {
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
-export default function CalendarDrawer({ days, startDate, onJump, onClose }) {
+export default function CalendarDrawer({
+  days, startDate,
+  onAddActivity, onEditActivity, onUpdateDay,
+  onClose,
+}) {
   const tripStart = new Date(startDate + 'T00:00:00');
-  const initialMonth = tripStart.getMonth();
-  const initialYear = tripStart.getFullYear();
+  const [viewYear, setViewYear] = useState(tripStart.getFullYear());
+  const [viewMonth, setViewMonth] = useState(tripStart.getMonth());
+  const [activeDay, setActiveDay] = useState(null);
+  const drawerBodyRef = useRef(null);
 
-  const [viewYear, setViewYear] = useState(initialYear);
-  const [viewMonth, setViewMonth] = useState(initialMonth);
-
-  // Build lookup: "YYYY-MM-DD" → { dayIndex, dayNumber, actCount }
   const tripMap = {};
   days.forEach((d, idx) => {
-    if (d.date) {
-      tripMap[d.date] = {
-        dayIndex: idx,
-        dayNumber: d.dayNumber,
-        actCount: d.activities.length,
-        booked: d.activities.filter(a => a.booked).length,
-      };
-    }
+    if (d.date) tripMap[d.date] = { dayIndex: idx, dayNumber: d.dayNumber, actCount: d.activities.length };
   });
 
   const cells = buildMonth(viewYear, viewMonth);
+  const todayStr = new Date().toISOString().split('T')[0];
 
   function prevMonth() {
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
@@ -46,159 +43,167 @@ export default function CalendarDrawer({ days, startDate, onJump, onClose }) {
     else setViewMonth(m => m + 1);
   }
 
-  function handleDayClick(day) {
+  function handleCalendarDay(day) {
     if (!day) return;
     const dateStr = `${viewYear}-${pad(viewMonth + 1)}-${pad(day)}`;
     const info = tripMap[dateStr];
     if (!info) return;
-    onJump(info.dayIndex);
-    onClose();
+    setActiveDay(info.dayIndex);
     setTimeout(() => {
-      document.getElementById(`day-card-${info.dayIndex}`)
+      drawerBodyRef.current
+        ?.querySelector(`#drawer-day-${info.dayIndex}`)
         ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 60);
+    }, 40);
   }
 
   const monthName = new Date(viewYear, viewMonth, 1)
     .toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-  // Today string for highlighting
-  const todayStr = new Date().toISOString().split('T')[0];
-
   return (
     <div style={s.backdrop} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={s.drawer} className="fade-in">
-        {/* Drag handle for mobile */}
-        <div style={s.handle} />
+      <div style={s.drawer}>
+        {/* Sticky header inside drawer */}
+        <div style={s.stickyHead}>
+          <div style={s.handle} />
 
-        {/* Header */}
-        <div style={s.header}>
-          <span style={s.headerTitle}>Trip Calendar</span>
-          <button style={s.closeBtn} onClick={onClose}><X size={18} /></button>
-        </div>
+          <div style={s.header}>
+            <span style={s.headerTitle}>Itinerary</span>
+            <button style={s.closeBtn} onClick={onClose}><X size={18} /></button>
+          </div>
 
-        {/* Legend */}
-        <div style={s.legend}>
-          <span style={s.legendItem}><span style={{ ...s.dot, background: '#c1704a' }} /> Trip day</span>
-          <span style={s.legendItem}><span style={{ ...s.dot, background: '#4a7c59' }} /> Has activities</span>
-        </div>
+          {/* Month nav */}
+          <div style={s.monthNav}>
+            <button style={s.navBtn} onClick={prevMonth}><ChevronLeft size={17} /></button>
+            <span style={s.monthLabel}>{monthName}</span>
+            <button style={s.navBtn} onClick={nextMonth}><ChevronRight size={17} /></button>
+          </div>
 
-        {/* Month nav */}
-        <div style={s.monthNav}>
-          <button style={s.navBtn} onClick={prevMonth}><ChevronLeft size={18} /></button>
-          <span style={s.monthLabel}>{monthName}</span>
-          <button style={s.navBtn} onClick={nextMonth}><ChevronRight size={18} /></button>
-        </div>
+          {/* Day-of-week labels */}
+          <div style={s.dowRow}>
+            {DOW.map(d => <span key={d} style={s.dowCell}>{d}</span>)}
+          </div>
 
-        {/* Day-of-week row */}
-        <div style={s.dowRow}>
-          {DOW.map(d => <span key={d} style={s.dowCell}>{d}</span>)}
-        </div>
+          {/* Calendar grid */}
+          <div style={s.grid}>
+            {cells.map((day, i) => {
+              if (!day) return <div key={i} />;
+              const dateStr = `${viewYear}-${pad(viewMonth + 1)}-${pad(day)}`;
+              const info = tripMap[dateStr];
+              const isToday = dateStr === todayStr;
+              const isTrip = !!info;
+              const hasAct = info && info.actCount > 0;
+              const isSelected = info && activeDay === info.dayIndex;
 
-        {/* Calendar grid */}
-        <div style={s.grid}>
-          {cells.map((day, i) => {
-            if (!day) return <div key={i} />;
-            const dateStr = `${viewYear}-${pad(viewMonth + 1)}-${pad(day)}`;
-            const info = tripMap[dateStr];
-            const isToday = dateStr === todayStr;
-            const isTrip = !!info;
-            const hasActivities = info && info.actCount > 0;
+              return (
+                <button
+                  key={i}
+                  onClick={() => handleCalendarDay(day)}
+                  disabled={!isTrip}
+                  style={{
+                    ...s.cell,
+                    ...(isTrip ? s.cellTrip : s.cellOther),
+                    ...(hasAct ? s.cellActive : {}),
+                    ...(isToday && !isTrip ? s.cellToday : {}),
+                    ...(isSelected ? s.cellSelected : {}),
+                    cursor: isTrip ? 'pointer' : 'default',
+                  }}
+                >
+                  <span style={s.cellDay}>{day}</span>
+                  {isTrip && (
+                    <span style={{ ...s.tripNum, opacity: hasAct ? 0.9 : 0.7 }}>
+                      {info.dayNumber}
+                    </span>
+                  )}
+                  {hasAct && (
+                    <div style={s.dots}>
+                      {Array.from({ length: Math.min(info.actCount, 4) }).map((_, di) => (
+                        <span key={di} style={s.actDot} />
+                      ))}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
-            return (
-              <button
-                key={i}
-                style={{
-                  ...s.cell,
-                  ...(isTrip ? s.cellTrip : s.cellOther),
-                  ...(hasActivities ? s.cellActive : {}),
-                  ...(isToday && !isTrip ? s.cellToday : {}),
-                  cursor: isTrip ? 'pointer' : 'default',
-                }}
-                onClick={() => handleDayClick(day)}
-                disabled={!isTrip}
-                title={info ? `Day ${info.dayNumber}${info.actCount ? ` — ${info.actCount} activities` : ''}` : undefined}
-              >
-                <span style={s.cellDay}>{day}</span>
-                {isTrip && (
-                  <span style={{ ...s.dayNum, color: hasActivities ? '#fff' : 'rgba(255,255,255,0.8)' }}>
-                    {info.dayNumber}
-                  </span>
-                )}
-                {hasActivities && (
-                  <div style={s.dots}>
-                    {Array.from({ length: Math.min(info.actCount, 4) }).map((_, di) => (
-                      <span key={di} style={s.actDot} />
-                    ))}
-                  </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Trip range summary */}
-        <div style={s.footer}>
-          <div style={s.tripRange}>
-            <span style={s.rangeLabel}>Trip:</span>
-            <span style={s.rangeVal}>
-              {formatRange(days[0]?.date, days[13]?.date)}
+          {/* Legend */}
+          <div style={s.legend}>
+            <span style={s.legendItem}><span style={{ ...s.dot, background: '#c1704a' }} /> Trip day</span>
+            <span style={s.legendItem}><span style={{ ...s.dot, background: '#4a7c59' }} /> Has activities</span>
+            <span style={s.legendItem}>
+              {days.filter(d => d.activities.length > 0).length}/14 days planned
             </span>
           </div>
-          <div style={s.tripStats}>
-            {days.filter(d => d.activities.length > 0).length} of 14 days planned
-          </div>
+
+          <div style={s.divider} />
+        </div>
+
+        {/* Scrollable day cards section */}
+        <div style={s.cardsSection} ref={drawerBodyRef}>
+          {days.map((day, idx) => (
+            <div key={day.id} id={`drawer-day-${idx}`} style={s.cardWrap}>
+              <DayCard
+                day={day}
+                dayIndex={idx}
+                isActive={activeDay === idx}
+                onToggle={() => setActiveDay(prev => prev === idx ? null : idx)}
+                onAddActivity={onAddActivity}
+                onEditActivity={act => onEditActivity(idx, act)}
+                onUpdateDay={changes => onUpdateDay(idx, changes)}
+              />
+            </div>
+          ))}
+          <div style={s.bottomPad} />
         </div>
       </div>
     </div>
   );
 }
 
-function formatRange(start, end) {
-  if (!start || !end) return '';
-  const s = new Date(start + 'T00:00:00');
-  const e = new Date(end + 'T00:00:00');
-  const opts = { month: 'short', day: 'numeric' };
-  return `${s.toLocaleDateString('en-US', opts)} – ${e.toLocaleDateString('en-US', { ...opts, year: 'numeric' })}`;
-}
-
 const s = {
   backdrop: {
     position: 'fixed',
     inset: 0,
-    background: 'rgba(44,36,23,0.4)',
-    backdropFilter: 'blur(3px)',
+    background: 'rgba(44,36,23,0.45)',
+    backdropFilter: 'blur(4px)',
     zIndex: 900,
     display: 'flex',
     alignItems: 'flex-end',
     justifyContent: 'center',
   },
   drawer: {
-    background: '#fff',
+    background: '#fdf6ef',
     borderRadius: '24px 24px 0 0',
     width: '100%',
-    maxWidth: 420,
-    maxHeight: '90vh',
-    overflowY: 'auto',
-    boxShadow: '0 -8px 40px rgba(44,36,23,0.2)',
-    paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+    maxWidth: 680,
+    height: '95vh',
+    display: 'flex',
+    flexDirection: 'column',
+    boxShadow: '0 -8px 48px rgba(44,36,23,0.22)',
+    overflow: 'hidden',
+    animation: 'modalIn 0.28s cubic-bezier(.32,.72,0,1)',
+  },
+  stickyHead: {
+    background: '#fff',
+    flexShrink: 0,
+    borderBottom: '1px solid #f0e8e0',
   },
   handle: {
     width: 40,
     height: 4,
     background: '#e0d4c8',
     borderRadius: 2,
-    margin: '12px auto 0',
+    margin: '10px auto 0',
   },
   header: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '12px 20px 8px',
+    padding: '10px 20px 6px',
   },
   headerTitle: {
     fontFamily: "'Playfair Display', serif",
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 700,
     color: '#2c2417',
   },
@@ -214,36 +219,18 @@ const s = {
     justifyContent: 'center',
     color: '#8a7060',
   },
-  legend: {
-    display: 'flex',
-    gap: 16,
-    padding: '0 20px 10px',
-  },
-  legendItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 5,
-    fontSize: 12,
-    color: '#8a7060',
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: '50%',
-    display: 'inline-block',
-  },
   monthNav: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '4px 16px 10px',
+    padding: '2px 16px 6px',
   },
   navBtn: {
     background: '#f5ede6',
     border: 'none',
     borderRadius: 8,
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
@@ -252,108 +239,93 @@ const s = {
   },
   monthLabel: {
     fontWeight: 700,
-    fontSize: 15,
+    fontSize: 14,
     color: '#2c2417',
   },
   dowRow: {
     display: 'grid',
     gridTemplateColumns: 'repeat(7, 1fr)',
-    padding: '0 12px',
-    marginBottom: 4,
+    padding: '0 10px',
   },
   dowCell: {
     textAlign: 'center',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 600,
     color: '#b8a898',
     textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    padding: '4px 0',
+    letterSpacing: '0.4px',
+    padding: '2px 0',
   },
   grid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(7, 1fr)',
-    gap: 3,
-    padding: '0 12px 12px',
+    gap: 2,
+    padding: '2px 10px 8px',
   },
   cell: {
-    borderRadius: 10,
-    minHeight: 52,
+    borderRadius: 8,
+    minHeight: 44,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     border: 'none',
     gap: 1,
-    padding: '4px 2px',
-    position: 'relative',
+    padding: '3px 1px',
   },
-  cellOther: {
-    background: 'none',
-    color: '#c0b0a0',
-  },
-  cellToday: {
-    background: '#f5ede6',
-    color: '#c1704a',
-  },
-  cellTrip: {
-    background: '#c1704a',
-    color: '#fff',
-  },
-  cellActive: {
-    background: '#4a7c59',
-  },
-  cellDay: {
-    fontSize: 14,
-    fontWeight: 600,
-    lineHeight: 1,
-  },
-  dayNum: {
+  cellOther: { background: 'none', color: '#c8b8a8' },
+  cellToday: { background: '#f5ede6', color: '#c1704a' },
+  cellTrip: { background: '#c1704a', color: '#fff' },
+  cellActive: { background: '#4a7c59' },
+  cellSelected: { outline: '2px solid #2c2417', outlineOffset: 1 },
+  cellDay: { fontSize: 13, fontWeight: 600, lineHeight: 1 },
+  tripNum: {
     fontSize: 9,
     fontWeight: 500,
-    letterSpacing: '0.3px',
+    color: 'rgba(255,255,255,0.85)',
     lineHeight: 1,
   },
-  dots: {
-    display: 'flex',
-    gap: 2,
-    marginTop: 1,
-  },
+  dots: { display: 'flex', gap: 2, marginTop: 1 },
   actDot: {
-    width: 4,
-    height: 4,
+    width: 3,
+    height: 3,
     borderRadius: '50%',
     background: 'rgba(255,255,255,0.7)',
     display: 'inline-block',
   },
-  footer: {
-    borderTop: '1px solid #f0e8e0',
-    padding: '12px 20px 16px',
+  legend: {
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 14,
+    padding: '4px 12px 8px',
     flexWrap: 'wrap',
-    gap: 6,
   },
-  tripRange: {
+  legendItem: {
     display: 'flex',
-    gap: 6,
     alignItems: 'center',
-  },
-  rangeLabel: {
-    fontSize: 12,
+    gap: 4,
+    fontSize: 11,
     color: '#8a7060',
-    fontWeight: 600,
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
   },
-  rangeVal: {
-    fontSize: 13,
-    color: '#2c2417',
-    fontWeight: 500,
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: '50%',
+    display: 'inline-block',
+    flexShrink: 0,
   },
-  tripStats: {
-    fontSize: 12,
-    color: '#8a7060',
+  divider: {
+    height: 1,
+    background: '#f0e8e0',
+  },
+  cardsSection: {
+    flex: 1,
+    overflowY: 'auto',
+    padding: '12px 12px 0',
+  },
+  cardWrap: {
+    marginBottom: 10,
+  },
+  bottomPad: {
+    height: 'calc(24px + env(safe-area-inset-bottom, 0px))',
   },
 };
