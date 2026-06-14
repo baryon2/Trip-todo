@@ -1,0 +1,9 @@
+/* Responsive layout override for small screens */
+@media (max-width: 768px) {
+  .layout-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .sidebar {
+    position: static !important;
+  }
+}
