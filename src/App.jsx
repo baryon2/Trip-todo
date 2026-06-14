@@ -1,7 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
+import { CalendarDays } from 'lucide-react';
 import Header from './components/Header';
 import DayCard from './components/DayCard';
 import ActivityModal from './components/ActivityModal';
+import CalendarDrawer from './components/CalendarDrawer';
 import Summary from './components/Summary';
 import Checklist from './components/Checklist';
 import { getDefaultItinerary, saveItinerary, newActivity, formatDateShort } from './utils/defaults';
@@ -11,6 +13,7 @@ export default function App() {
   const [itinerary, setItinerary] = useState(getDefaultItinerary);
   const [activeDay, setActiveDay] = useState(null);
   const [modal, setModal] = useState(null); // { dayIndex, activity }
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   function update(updater) {
     setItinerary(prev => {
@@ -90,6 +93,10 @@ export default function App() {
           <Summary days={itinerary.days} />
           <Checklist />
           <QuickNav days={itinerary.days} activeDay={activeDay} onJump={setActiveDay} />
+          <button style={styles.calendarBtn} onClick={() => setCalendarOpen(true)}>
+            <CalendarDays size={18} />
+            View Calendar
+          </button>
         </aside>
 
         {/* Days */}
@@ -110,6 +117,15 @@ export default function App() {
           </div>
         </main>
       </div>
+
+      {calendarOpen && (
+        <CalendarDrawer
+          days={itinerary.days}
+          startDate={itinerary.startDate}
+          onJump={idx => setActiveDay(idx)}
+          onClose={() => setCalendarOpen(false)}
+        />
+      )}
 
       {modal && (
         <ActivityModal
@@ -201,5 +217,22 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: 12,
+  },
+  calendarBtn: {
+    width: '100%',
+    minHeight: 48,
+    background: 'linear-gradient(135deg, #c1704a, #a05a38)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: 14,
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    boxShadow: '0 2px 12px rgba(193,112,74,0.3)',
+    fontFamily: 'inherit',
   },
 };
