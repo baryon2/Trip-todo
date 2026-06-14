@@ -84,16 +84,16 @@ export default function App() {
         onUpdate={handleHeaderUpdate}
       />
 
-      <div style={styles.layout}>
+      <div className="app-layout">
         {/* Sidebar */}
-        <aside style={styles.sidebar}>
+        <aside className="app-sidebar">
           <Summary days={itinerary.days} />
           <Checklist />
           <QuickNav days={itinerary.days} activeDay={activeDay} onJump={setActiveDay} />
         </aside>
 
         {/* Days */}
-        <main style={styles.main}>
+        <main className="app-main">
           <div style={styles.daysGrid}>
             {itinerary.days.map((day, idx) => (
               <DayCard
@@ -128,7 +128,7 @@ function QuickNav({ days, activeDay, onJump }) {
   return (
     <div style={navStyles.wrap}>
       <p style={navStyles.label}>Quick Jump</p>
-      <div style={navStyles.grid}>
+      <div className="quicknav-grid">
         {days.map((day, idx) => (
           <button
             key={day.id}
@@ -169,16 +169,11 @@ const navStyles = {
     letterSpacing: '0.8px',
     marginBottom: 10,
   },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(7, 1fr)',
-    gap: 5,
-  },
   btn: {
     border: '1.5px solid #e8ddd4',
     background: '#fdfaf7',
     borderRadius: 8,
-    height: 34,
+    height: 44,
     fontSize: 13,
     fontWeight: 500,
     color: '#8a7060',
@@ -201,28 +196,6 @@ const navStyles = {
 const styles = {
   app: {
     minHeight: '100vh',
-  },
-  layout: {
-    maxWidth: 1100,
-    margin: '0 auto',
-    padding: '24px 16px 48px',
-    display: 'grid',
-    gridTemplateColumns: '300px 1fr',
-    gap: 20,
-    alignItems: 'start',
-    '@media (max-width: 768px)': {
-      gridTemplateColumns: '1fr',
-    },
-  },
-  sidebar: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 16,
-    position: 'sticky',
-    top: 20,
-  },
-  main: {
-    minWidth: 0,
   },
   daysGrid: {
     display: 'flex',

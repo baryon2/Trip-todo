@@ -39,7 +39,7 @@ export default function ActivityModal({ activity, dayLabel, onSave, onDelete, on
           />
 
           {/* Type + Time row */}
-          <div style={styles.row}>
+          <div className="modal-row">
             <div style={{ flex: 1 }}>
               <label style={styles.label}>Type</label>
               <select style={styles.select} value={form.type} onChange={e => set('type', e.target.value)}>
@@ -69,7 +69,7 @@ export default function ActivityModal({ activity, dayLabel, onSave, onDelete, on
           />
 
           {/* Cost + Link row */}
-          <div style={styles.row}>
+          <div className="modal-row">
             <div style={{ flex: 1 }}>
               <label style={styles.label}>Estimated Cost (USD)</label>
               <input
@@ -144,23 +144,24 @@ const styles = {
     backdropFilter: 'blur(4px)',
     zIndex: 1000,
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     justifyContent: 'center',
-    padding: '16px',
+    padding: '0',
   },
   modal: {
     background: '#fff',
-    borderRadius: 20,
+    borderRadius: '20px 20px 0 0',
     width: '100%',
-    maxWidth: 520,
-    maxHeight: '90vh',
+    maxWidth: 560,
+    maxHeight: '92vh',
     overflowY: 'auto',
-    boxShadow: '0 24px 64px rgba(44,36,23,0.25)',
-    animation: 'modalIn 0.2s ease',
+    boxShadow: '0 -8px 40px rgba(44,36,23,0.2)',
+    animation: 'modalIn 0.25s ease',
   },
   modalHeader: {
     padding: '20px 20px 16px',
     borderRadius: '20px 20px 0 0',
+    position: 'relative',
     display: 'flex',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
@@ -177,10 +178,10 @@ const styles = {
   closeBtn: {
     background: 'rgba(255,255,255,0.2)',
     border: 'none',
-    borderRadius: 8,
+    borderRadius: 10,
     color: '#fff',
-    width: 32,
-    height: 32,
+    width: 44,
+    height: 44,
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
@@ -260,12 +261,13 @@ const styles = {
     color: '#5c4a35',
   },
   footer: {
-    padding: '16px 20px',
+    padding: '16px 20px calc(16px + env(safe-area-inset-bottom, 0px))',
     borderTop: '1px solid #f0e8e0',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 10,
+    flexWrap: 'wrap',
   },
   footerRight: {
     display: 'flex',
@@ -277,10 +279,11 @@ const styles = {
     color: '#fff',
     border: 'none',
     borderRadius: 10,
-    padding: '9px 20px',
-    fontSize: 14,
+    padding: '12px 20px',
+    fontSize: 15,
     fontWeight: 600,
     cursor: 'pointer',
+    minHeight: 44,
     transition: 'background 0.2s',
   },
   cancelBtn: {
@@ -288,17 +291,19 @@ const styles = {
     color: '#8a7060',
     border: '1.5px solid #e0d4c8',
     borderRadius: 10,
-    padding: '9px 16px',
-    fontSize: 14,
+    padding: '12px 16px',
+    fontSize: 15,
     cursor: 'pointer',
+    minHeight: 44,
   },
   deleteBtn: {
     background: 'transparent',
     color: '#c0392b',
     border: '1.5px solid #f0c8c0',
     borderRadius: 10,
-    padding: '9px 16px',
-    fontSize: 14,
+    padding: '12px 16px',
+    fontSize: 15,
     cursor: 'pointer',
+    minHeight: 44,
   },
 };

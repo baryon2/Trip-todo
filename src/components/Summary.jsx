@@ -175,7 +175,8 @@ const styles = {
   breakLabel: {
     fontSize: 12,
     color: '#5c4a35',
-    minWidth: 70,
+    minWidth: 60,
+    flexShrink: 1,
   },
   breakCount: {
     fontSize: 13,
