@@ -16,8 +16,8 @@ const DEFAULT_ITEMS = [
   { id: 'p12', text: 'Temple sarong / sash', done: false },
 ];
 
-export default function Checklist() {
-  const [open, setOpen] = useState(false);
+export default function Checklist({ defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
   const [items, setItems] = useState(() => {
     const stored = localStorage.getItem('bali-checklist');
     if (stored) try { return JSON.parse(stored); } catch {}

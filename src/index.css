@@ -58,29 +58,20 @@ body {
 .fade-in { animation: fadeIn 0.3s ease forwards; }
 .slide-in { animation: slideIn 0.25s ease forwards; }
 
-/* ── Home page layout ──────────────────────────────── */
+/* ── Tab page layouts ──────────────────────────────── */
 .home-layout {
   max-width: 680px;
   margin: 0 auto;
-  padding: 24px 16px 48px;
+  padding: 20px 16px 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.home-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 14px;
 }
 
 @media (max-width: 560px) {
   .home-layout {
-    padding: 14px 12px 40px;
+    padding: 14px 12px 0;
     gap: 12px;
-  }
-  .home-grid {
-    grid-template-columns: 1fr;
   }
 }
 

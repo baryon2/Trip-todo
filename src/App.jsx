@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { CalendarDays } from 'lucide-react';
 import Header from './components/Header';
+import BottomNav from './components/BottomNav';
+import ItineraryView from './components/ItineraryView';
 import ActivityModal from './components/ActivityModal';
-import CalendarDrawer from './components/CalendarDrawer';
 import Summary from './components/Summary';
 import Checklist from './components/Checklist';
 import { getDefaultItinerary, saveItinerary, newActivity, formatDateShort } from './utils/defaults';
@@ -10,8 +10,8 @@ import './index.css';
 
 export default function App() {
   const [itinerary, setItinerary] = useState(getDefaultItinerary);
-  const [modal, setModal] = useState(null); // { dayIndex, activity }
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [tab, setTab] = useState('overview');
+  const [modal, setModal] = useState(null);
 
   function update(updater) {
     setItinerary(prev => {
@@ -78,40 +78,41 @@ export default function App() {
   const modalDay = modal ? itinerary.days[modal.dayIndex] : null;
 
   return (
-    <div>
+    <div style={s.app}>
       <Header
         tripName={itinerary.tripName}
         startDate={itinerary.startDate}
         onUpdate={handleHeaderUpdate}
       />
 
-      <div className="home-layout">
-        <div className="home-grid">
-          <Summary days={itinerary.days} />
-          <Checklist />
-        </div>
+      <div style={s.content}>
+        {tab === 'overview' && (
+          <div className="fade-in home-layout">
+            <Summary days={itinerary.days} />
+            <QuickNav days={itinerary.days} onJumpToItinerary={() => setTab('itinerary')} />
+          </div>
+        )}
 
-        <QuickNav
-          days={itinerary.days}
-          onJump={() => setCalendarOpen(true)}
-        />
+        {tab === 'itinerary' && (
+          <div className="fade-in">
+            <ItineraryView
+              days={itinerary.days}
+              startDate={itinerary.startDate}
+              onAddActivity={openAddActivity}
+              onEditActivity={openEditActivity}
+              onUpdateDay={handleUpdateDay}
+            />
+          </div>
+        )}
 
-        <button style={styles.calendarBtn} onClick={() => setCalendarOpen(true)}>
-          <CalendarDays size={20} />
-          Open Itinerary &amp; Calendar
-        </button>
+        {tab === 'checklist' && (
+          <div className="fade-in home-layout">
+            <Checklist defaultOpen />
+          </div>
+        )}
       </div>
 
-      {calendarOpen && (
-        <CalendarDrawer
-          days={itinerary.days}
-          startDate={itinerary.startDate}
-          onAddActivity={openAddActivity}
-          onEditActivity={openEditActivity}
-          onUpdateDay={handleUpdateDay}
-          onClose={() => setCalendarOpen(false)}
-        />
-      )}
+      <BottomNav active={tab} onChange={setTab} />
 
       {modal && (
         <ActivityModal
@@ -126,19 +127,16 @@ export default function App() {
   );
 }
 
-function QuickNav({ days, onJump }) {
+function QuickNav({ days, onJumpToItinerary }) {
   return (
-    <div style={navStyles.wrap}>
-      <p style={navStyles.label}>Quick Jump — tap a day to open the itinerary</p>
+    <div style={nav.wrap}>
+      <p style={nav.label}>Quick Jump — tap a day to open itinerary</p>
       <div className="quicknav-grid">
         {days.map((day, idx) => (
           <button
             key={day.id}
-            style={{
-              ...navStyles.btn,
-              ...(day.activities.length > 0 ? navStyles.btnFilled : {}),
-            }}
-            onClick={onJump}
+            style={{ ...nav.btn, ...(day.activities.length > 0 ? nav.btnFilled : {}) }}
+            onClick={onJumpToItinerary}
             title={`Day ${day.dayNumber}${day.location ? ' — ' + day.location : ''}`}
           >
             {day.dayNumber}
@@ -149,7 +147,7 @@ function QuickNav({ days, onJump }) {
   );
 }
 
-const navStyles = {
+const nav = {
   wrap: {
     background: '#fff',
     borderRadius: 16,
@@ -174,7 +172,6 @@ const navStyles = {
     fontWeight: 500,
     color: '#8a7060',
     cursor: 'pointer',
-    transition: 'all 0.15s',
   },
   btnFilled: {
     background: '#f5ede6',
@@ -184,23 +181,14 @@ const navStyles = {
   },
 };
 
-const styles = {
-  calendarBtn: {
-    width: '100%',
-    minHeight: 52,
-    background: 'linear-gradient(135deg, #c1704a, #a05a38)',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 16,
-    fontSize: 16,
-    fontWeight: 700,
-    cursor: 'pointer',
+const s = {
+  app: {
+    minHeight: '100vh',
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    boxShadow: '0 4px 20px rgba(193,112,74,0.35)',
-    fontFamily: 'inherit',
-    letterSpacing: '0.2px',
+    flexDirection: 'column',
+  },
+  content: {
+    flex: 1,
+    paddingBottom: 'calc(70px + env(safe-area-inset-bottom, 0px))',
   },
 };
