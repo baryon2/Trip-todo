@@ -68,7 +68,10 @@ export default function CalendarDrawer({
 
           <div style={s.header}>
             <span style={s.headerTitle}>Itinerary</span>
-            <button style={s.closeBtn} onClick={onClose}><X size={18} /></button>
+            <button style={s.closeBtn} onClick={onClose}>
+              <X size={18} />
+              <span style={s.closeTxt}>Close</span>
+            </button>
           </div>
 
           {/* Month nav */}
@@ -208,16 +211,23 @@ const s = {
     color: '#2c2417',
   },
   closeBtn: {
-    background: '#f5ede6',
-    border: 'none',
+    background: '#f0e8e0',
+    border: '1.5px solid #d8c8b8',
     borderRadius: 10,
-    width: 36,
     height: 36,
+    padding: '0 14px',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
-    color: '#8a7060',
+    gap: 6,
+    color: '#5c4a35',
+    fontFamily: 'inherit',
+    fontWeight: 600,
+    fontSize: 13,
+    flexShrink: 0,
+  },
+  closeTxt: {
+    lineHeight: 1,
   },
   monthNav: {
     display: 'flex',
